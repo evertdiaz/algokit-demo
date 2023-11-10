@@ -1,6 +1,7 @@
 import { Contract } from '@algorandfoundation/tealscript';
 
-type User = { tipo: number; numero_reprocan: number };
+type User = { tipo: number; numero_reprocan: number }
+type Producto = {precio: number; nombre: string}
 
 // eslint-disable-next-line no-unused-vars
 class Contrato extends Contract {
@@ -19,7 +20,7 @@ class Contrato extends Contract {
   registeredAsa = GlobalStateKey<Asset>()
   owner = GlobalStateKey<Address>()
   miembrosBox = BoxMap<Address, User>()
-  productosBox = BoxMap<number, number>()
+  productosBox = BoxMap<number, Producto>()
 
   createApplication(): void {
     this.owner.value = this.txn.sender;
@@ -43,16 +44,6 @@ class Contrato extends Contract {
   cambiar_owner(new_owner: Address): void {
     assert(this.txn.sender == this.owner.value)
     this.owner.value = new_owner
-  }
-
-  // aca el user va a poder comprar cosas
-  realizarPago(payment: AssetTransferTxn): void {
-    verifyTxn(payment, {
-      receiver: this.app.address,
-      assetAmount: 1,
-      xferAsset: this.registeredAsa.value
-    })
-
   }
 
   // Agrega un miembro a el array de miembros
@@ -99,7 +90,7 @@ class Contrato extends Contract {
       assetAmount: cantidad
     });
   }
-  
+
   congelar_billetera(target: Address, registeredAsa: Asset): void {
     sendAssetFreeze({
       freezeAsset: this.registeredAsa.value,
@@ -123,6 +114,29 @@ class Contrato extends Contract {
 
   getOwner(): Address {
     return this.owner.value
+  }
+
+  // aca el user va a poder comprar cosas
+  realizarPago(id: number, payment: AssetTransferTxn): void {
+    if (this.productosBox(id).exists) {
+      const :
+      verifyTxn(payment, {
+        receiver: this.app.address,
+        assetAmount: 1,
+        xferAsset: this.registeredAsa.value
+      })
+      
+
+    }
+
+  }
+
+  agreagar_producto(): void {
+    if (this.productosBox(id).exists) {
+      th
+    }
+
+
   }
 
 }
