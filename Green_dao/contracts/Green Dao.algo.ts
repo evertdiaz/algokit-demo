@@ -26,6 +26,12 @@ class Contrato extends Contract {
     this.owner.value = this.txn.sender;
   }
 
+  // Cambia quien es el owner del contrato
+  cambiar_owner(new_owner: Address): void {
+    assert(this.txn.sender == this.owner.value)
+    this.owner.value = new_owner
+  }
+
   // El contrato crea 1.000.000 de tokens para que el owner pueda dar
   bootstrap(): Asset {
     verifyTxn(this.txn, { sender: this.owner.value })
@@ -38,12 +44,6 @@ class Contrato extends Contract {
     this.registeredAsa.value = registeredAsa;
     log("Asset Creado de forma correcta")
     return registeredAsa;
-  }
-
-  // Cambia quien es el owner del contrato
-  cambiar_owner(new_owner: Address): void {
-    assert(this.txn.sender == this.owner.value)
-    this.owner.value = new_owner
   }
 
   // Agrega un miembro a el array de miembros
@@ -89,6 +89,8 @@ class Contrato extends Contract {
       assetReceiver: enviar_a,
       assetAmount: cantidad
     });
+
+    log("tokens enviados exitosamente")
   }
 
   congelar_billetera(target: Address, registeredAsa: Asset): void {
@@ -111,7 +113,6 @@ class Contrato extends Contract {
     return this.registeredAsa.value;
   }
 
-
   getOwner(): Address {
     return this.owner.value
   }
@@ -119,23 +120,29 @@ class Contrato extends Contract {
   // aca el user va a poder comprar cosas
   realizarPago(id: number, payment: AssetTransferTxn): void {
     if (this.productosBox(id).exists) {
+      const producto_apagar: Producto = this.productosBox(id).value
       verifyTxn(payment, {
         receiver: this.app.address,
-        assetAmount: 1,
+        assetAmount: producto_apagar.precio,
         xferAsset: this.registeredAsa.value
       })
-      
 
+      log(`${this.txn.sender} | ${id}`)
     }
 
+    throw 'este producto no existe'
   }
 
-  agreagar_producto(): void {
-    if (this.productosBox(id).exists) {
-      th
+  agreagar_producto( precio: number, nombre: string): void {
+    verifyTxn(this.txn, { sender: this.owner.value })
+    const new_id = this.productosBox.length
+    const nuevoProducto: Producto = {precio: precio, nombre: nombre}
+    if (this.productosBox(new_id).exists) {
+      throw "This should not happen"
     }
 
-
+    this.productosBox(new_id).value = nuevoProducto
+    log("Producto creado exitosamente")
   }
 
 }
