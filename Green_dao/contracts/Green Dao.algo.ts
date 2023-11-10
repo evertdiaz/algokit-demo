@@ -1,7 +1,6 @@
 import { Contract } from '@algorandfoundation/tealscript';
 
-type User = { direccion: Address; tipo: uint256; nombee: stirng };
-
+type User = { tipo: number; numero_reprocan: number };
 
 // eslint-disable-next-line no-unused-vars
 class Contrato extends Contract {
@@ -15,12 +14,12 @@ class Contrato extends Contract {
 
     VER COMO COMPROBAR CUANTOS TOKENS FUERON ENVIADOS EN UNA TRANSACCION
       Al saber como hacer esto podremos hacer los metodos de compra (por ahora hagamos solo compra de "Costo de cultivo")
-      
   */
   
-  registeredAsa = GlobalStateKey<Asset>();
-  owner = GlobalStateKey<Address>();cd
-  miembros = BoxMap<Control, bytes>();
+  registeredAsa = GlobalStateKey<Asset>()
+  owner = GlobalStateKey<Address>()
+  miembrosBox = BoxMap<Address, User>()
+  productosBox = BoxMap<number, number>()
 
   createApplication(): void {
     this.owner.value = this.txn.sender;
@@ -36,39 +35,58 @@ class Contrato extends Contract {
     })
 
     this.registeredAsa.value = registeredAsa;
+    log("Asset Creado de forma correcta")
     return registeredAsa;
   }
 
+  // Cambia quien es el owner del contrato
   cambiar_owner(new_owner: Address): void {
     assert(this.txn.sender == this.owner.value)
     this.owner.value = new_owner
   }
 
-  // Esto Rompe
-  /*
-    agregar_miembro(member: Address): void {
-      verifyTxn(this.txn, { sender: this.owner.value })
-      const memberList = this.miembros.value || []
-      if (!memberList.includes(member)) {
-        memberList.push(member)
-        this.miembros.value = memberList
-      }
+  // aca el user va a poder comprar cosas
+  realizarPago(payment: AssetTransferTxn): void {
+    verifyTxn(payment, {
+      receiver: this.app.address,
+      assetAmount: 1,
+      xferAsset: this.registeredAsa.value
+    })
+
+  }
+
+  // Agrega un miembro a el array de miembros
+  agregar_miembro(address: Address, tipo: number, numero_reprocan: number): void {
+    verifyTxn(this.txn, { sender: this.owner.value })
+
+    if (this.miembrosBox(address).exists){
+      throw 'este usuario ya existe'
     }
 
-    quitar_miembro(member: Address): void {
-      verifyTxn(this.txn, { sender: this.owner.value })
-      const memberList = this.miembros.value || []
-      const index = memberList.indexOf(member)
-      if (index !== -1) {
-        memberList.splice(index, 1)
-        this.miembros.value = memberList
-      }
+    const usuario : User = { tipo: tipo, numero_reprocan: numero_reprocan}
+    this.miembrosBox(address).value = (usuario)
+  }
+
+  // quita miembro del array de miembros
+  quitar_miembro(address: Address): void {
+    verifyTxn(this.txn, { sender: this.owner.value })
+
+    if (!this.miembrosBox(address).exists){
+      throw 'este usuario no existe'
     }
 
-    obtener_lista_miembros(): Address[] {
-      return this.miembros.value ;
+    this.miembrosBox(address).delete()
+  }
+
+  // busca un mienbro por direccion
+  get_miembro(address: Address): User {
+    verifyTxn(this.txn, { sender: this.owner.value })
+
+    if (!this.miembrosBox(address).exists){
+      throw 'este usuario no existe'
     }
-  */
+    return this.miembrosBox(address).value;
+  }
 
   //Con esta funcion el dueño del club puede enviar los tokens a cualquier biilletera luego de recibir el pago 
   enviar_fondos(enviar_a: Address, cantidad: number, registeredAsa: Asset): void {
@@ -81,7 +99,7 @@ class Contrato extends Contract {
       assetAmount: cantidad
     });
   }
-
+  
   congelar_billetera(target: Address, registeredAsa: Asset): void {
     sendAssetFreeze({
       freezeAsset: this.registeredAsa.value,
@@ -102,7 +120,9 @@ class Contrato extends Contract {
     return this.registeredAsa.value;
   }
 
+
   getOwner(): Address {
     return this.owner.value
   }
+
 }
