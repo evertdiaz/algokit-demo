@@ -119,7 +119,6 @@ class Contrato extends Contract {
   // aca el user va a poder comprar cosas
   realizarPago(id: number, payment: AssetTransferTxn): void {
     if (this.productosBox(id).exists) {
-      const :
       verifyTxn(payment, {
         receiver: this.app.address,
         assetAmount: 1,
